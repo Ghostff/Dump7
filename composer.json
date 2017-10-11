@@ -13,9 +13,10 @@
     "require": {
 		"php": ">=7.0"
 	},
-	"autoload" : {
-		"psr-4" : {
-		  	"Dump\\" : "src/"
-		}
+	"autoload": {
+		"classmap": [
+		  "src/Dump.php"
+		]
+	}
     }
 }
