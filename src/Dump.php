@@ -388,7 +388,7 @@ class Dump
      */
     private function arrayIndex(string $key, bool $parent = false): string
     {
-        if (!$parent)
+        if (! $parent)
         {
             return $this->color("'$key'", 'multi_array_key') . " {$this->color('=', 'multi_array_arrow')} ";
         }
