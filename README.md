@@ -31,9 +31,9 @@ $int = 327626;
 $double = 22.223;
 $null = null;
 $bool = true;
+$resource = fopen('LICENSE', 'r');
 
-
-new Dump(new Foo, $string, $array, $int, $double, $null, $bool, [
+new Dump(new Foo, $string, $array, $int, $double, $null, $bool, $resource, [
     'foo' => 'bar',
     'bar' => 'foo',
     [
@@ -48,7 +48,7 @@ new Dump(new Foo, $string, $array, $int, $double, $null, $bool, [
     ]
 ]);
 
-new Dump5(1 == '1', 1 === '1');
+new Dump(1 == '1', 1 === '1');
 ```
 Replacing predefined colors:
 ```php
@@ -59,13 +59,17 @@ CGI output:
 
 ![cgi screenshot](https://github.com/Ghostff/Dump7/blob/master/cgi.png)
 
-CLI Posix output:     
+CLI(Unix):     
     
 ![cli screenshot](https://github.com/Ghostff/Dump7/blob/master/posix.png)
 
-Windows user who are using command line tools like `cmder` can use the `Dump::d` method:
+CLI(Window):     
+
+![cli screenshot](https://github.com/Ghostff/Dump7/blob/master/posixWin.png)
+
+Windows user runing on terminal without color capabilities, can use `Dump::safe` method:
 ```php
-Dump::d(new Foo, $string, $array, $int, $double, $null, $bool, [
+Dump::safe(new Foo, $string, $array, $int, $double, $null, $bool, $resource, [
     'foo' => 'bar',
     'bar' => 'foo',
     [
@@ -81,5 +85,3 @@ Dump::d(new Foo, $string, $array, $int, $double, $null, $bool, [
 ]);
 ```
 CLI Windows output:
-
-![cli screenshot](https://github.com/Ghostff/Dump7/blob/master/posixWin.png)

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Bittr
  *
@@ -36,7 +38,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
- 
 
 class Dump
 {
@@ -59,6 +60,7 @@ class Dump
         'type'                  => ['AAAAAA', 'light_gray'],
         'size'                  => ['5BA415', 'green'],
         'recursion'             => ['F00000', 'red'],
+        'resource'              => ['F00000', 'red'],
 
         'array'                 => ['000000', 'white'],
         'multi_array_key'       => ['59829e', 'yellow'],
@@ -70,11 +72,9 @@ class Dump
         'property_visibility'   => ['741515', 'light_red'],
         'property_name'         => ['987a00', 'light_cyan'],
         'property_arrow'        => ['f00000', 'red'],
-
     ];
 
-    private static $force_posix = false;
-
+    private static $safe    = false;
     private static $changes = [];
 
     /**
@@ -143,7 +143,7 @@ class Dump
     /**
      * Dump constructor.
      */
-    public function __construct()
+    public function __construct(...$args)
     {
         if (substr(PHP_SAPI, 0, 3) == 'cli')
         {
@@ -152,16 +152,16 @@ class Dump
         }
 
         $this->colors = self::$changes + $this->colors;
-        $this->output($this->evaluate(func_get_args()));
+        $this->output($this->evaluate($args));
     }
 
     /**
      * Force debug to use posix, (For window users who are using tools like http://cmder.net/)
      */
-    public static function d()
+    public static function safe(...$args)
     {
-        self::$force_posix = true;
-        new self(...func_get_args());
+        self::$safe = true;
+        new self(...$args);
     }
 
     /**
@@ -187,30 +187,13 @@ class Dump
     }
 
     /**
-     * Check if working under Windows
-     *
-     * @see http://stackoverflow.com/questions/738823/possible-values-for-php-os
-     * @return bool
-     */
-    private function isWindows(): bool
-    {
-        return
-            (defined('PHP_OS') && (substr_compare(PHP_OS, 'win', 0, 3, true) === 0)) ||
-            (getenv('OS') != false && substr_compare(getenv('OS'), 'windows', 0, 7, true));
-    }
-
-    /**
      * Check if a resource is an interactive terminal
      *
      * @return bool
      */
     private function isPosix(): bool
     {
-        if (self::$force_posix) {
-            return true;
-        }
-        // Windows
-        if ($this->isWindows())
+        if (self::$safe)
         {
             return false;
         }
@@ -224,7 +207,7 @@ class Dump
             return $isPosix;
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -270,7 +253,7 @@ class Dump
      *
      * @param string $data
      */
-    private function output(string $data): void
+    private function output(string $data)
     {
         # Gets line
         $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
@@ -289,7 +272,7 @@ class Dump
         $file =  "{$bt['file']}(line:{$bt['line']})";
         if (! $this->isCli)
         {
-            echo '<code><small>' . $file . '</small><br />' . $data . '</code>';
+            echo "<code><small>{$file}</small><br />{$data}</code>";
         }
         else
         {
@@ -304,19 +287,19 @@ class Dump
      * @param string $name
      * @return string
      */
-    private function color($value, string $name): ?string
+    private function color($value, string $name): string
     {
         if (! $this->isCli)
         {
             if ($name == 'type')
             {
-                return '<small style="color:#' . $this->colors[$name][0] . '">' . $value . '</small>';
+                return "<small style=\"color:#{$this->colors[$name][0]}\">{$value}</small>";
             }
             elseif ($name == 'array' || $name == 'object')
             {
                 $value = preg_replace('/(\[|\]|array|object)/', '<b>$0</b>', $value);
             }
-            return '<span  style="color:#' . $this->colors[$name][0] . '">' . $value . '</span>';
+            return "<span  style=\"color:#{$this->colors[$name][0]}\">{$value}</span>";
         }
         else
         {
@@ -366,7 +349,7 @@ class Dump
      */
     private function indent(int $pad): string
     {
-        return str_repeat((! $this->isCli) ? '&nbsp;' : ' ', $pad);
+        return str_repeat(! $this->isCli ? '&nbsp;' : ' ', $pad);
     }
 
     /**
@@ -377,7 +360,7 @@ class Dump
      */
     private function pad(int $size): string
     {
-        return str_repeat((! $this->isCli) ? '&nbsp;' : ' ', $size < 0 ? 0 : $size);
+        return str_repeat(! $this->isCli ? '&nbsp;' : ' ', $size < 0 ? 0 : $size);
     }
 
     /**
@@ -389,14 +372,9 @@ class Dump
      */
     private function arrayIndex(string $key, bool $parent = false): string
     {
-        if (! $parent)
-        {
-            return $this->color("'$key'", 'multi_array_key') . " {$this->color('=', 'multi_array_arrow')} ";
-        }
-        else
-        {
-            return $this->color("'$key'", 'single_array_key') . " {$this->color('=>', 'single_array_arrow')} ";
-        }
+        return $parent
+            ? "{$this->color("'{$key}'", 'single_array_key')} {$this->color('=>', 'single_array_arrow')} "
+            : "{$this->color("'{$key}'", 'multi_array_key')} {$this->color('=', 'multi_array_arrow')} ";
     }
 
     /**
@@ -414,16 +392,16 @@ class Dump
         {
             if (is_array($arr))
             {
-                $tmp .= $this->breakLine() . $this->indent($this->indent) . $this->arrayIndex((string) $key) . ' ' . $this->counter(count($arr));
+                $tmp .= "{$this->breakLine()}{$this->indent($this->indent)}{$this->arrayIndex((string) $key)} {$this->counter(count($arr))}";
                 $new = $this->formatArray($arr, $obj_call);
                 $tmp .=  ($new != '') ? " {{$new}{$this->indent($this->indent)}}" : ' {}';
             }
             else
             {
-                $tmp .= $this->breakLine() . $this->indent($this->indent) . $this->arrayIndex((string) $key, true)
-                    . $this->evaluate([$arr], true);
+                $tmp .= "{$this->breakLine()}{$this->indent($this->indent)}{$this->arrayIndex((string) $key, true)}{$this->evaluate([$arr], true)}";
             }
         }
+
         $this->indent -= $this->pad_size;
         if ($tmp != '')
         {
@@ -451,6 +429,8 @@ class Dump
         {
             return $match[1];
         }
+
+        return '';
     }
 
     /**
@@ -485,8 +465,7 @@ class Dump
             }
 
             $prop->setAccessible(true);
-            $tmp .= $this->color("'{$prop->getName()}'", 'property_name')
-                . " {$this->color('=>', 'property_arrow')} {$this->evaluate(array($prop->getValue($object)), true, true)}";
+            $tmp .= "{$this->color("'{$prop->getName()}'", 'property_name')} {$this->color('=>', 'property_arrow')} {$this->evaluate(array($prop->getValue($object)), true, true)}";
         }
 
         if ($tmp != '')
@@ -530,14 +509,11 @@ class Dump
                         $each = nl2br(str_replace(array('<', ' '), array('&lt;', '&nbsp;'), $each));
                     }
 
-                    $tmp .=  $this->color("'{$each}'", $type)
-                        . "{$this->counter(strlen($each), 1)}{$this->type($type)}";
+                    $tmp .= "{$this->color("'{$each}'", $type)}{$this->counter(strlen($each), 1)}{$this->type($type)}";
                     break;
                 case 'integer':
-                    $tmp .=  "{$this->color((string) $each, $type)}{$this->type($type)}";
-                    break;
                 case 'double':
-                    $tmp .= "{$this->color((string) $each, $type)}{$this->type($type)}";
+                    $tmp .=  "{$this->color((string) $each, $type)}{$this->type($type)}";
                     break;
                 case 'NULL':
                     $tmp .= "{$this->color('null', 'null')}{$this->type($type)}";
@@ -549,10 +525,15 @@ class Dump
                     $tmp .= str_replace([':size', ':content'], [
                         $this->counter(count($each)),
                         $this->formatArray($each, $from_obj)
-                    ], $this->color('array :size [:content]', 'array'));
+                    ], $this->color('array :size [:content]', $type));
                     break;
                 case 'object':
                     $tmp .= $this->formatObject($each);
+                    break;
+                case 'resource':
+                    $resource_type = get_resource_type($each);
+                    $resource_id   = (int) $each;
+                    $tmp .= $this->color( "Resource[{$this->color("#{$resource_id}", 'integer')}]({$this->color($resource_type, $type)}) ", 'object');
                     break;
             }
 
