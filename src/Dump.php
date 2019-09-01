@@ -506,7 +506,7 @@ class Dump
 
                     if (! $this->isCli)
                     {
-                        $each = nl2br(str_replace(array('<', ' '), array('&lt;', '&nbsp;'), $each));
+                        $each = htmlentities($each);
                     }
 
                     $tmp .= "{$this->color("'{$each}'", $type)}{$this->counter(strlen($each), 1)}{$this->type($type)}";
