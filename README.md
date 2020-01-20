@@ -15,25 +15,38 @@ $ composer require ghostff/dump7
 ```    
 
 ```php
-class Foo
+class FooBar
 {
-	private $string = 'string';
-	protected $int = 10;
-	public $array = [
-	    'foo'   => 'bar'
-	];
-	protected static $bool = false;
+    private $inherited_int = 123;
+    private $inherited_bool = ['string'];
 }
 
-$string = 'Foobar';
-$array = ['foo', 'bar'];
-$int = 327626;
-$double = 22.223;
-$null = null;
-$bool = true;
-$resource = fopen('LICENSE', 'r');
+class Bar extends FooBar
+{
+    private $inherited_float = 0.22;
+    private $inherited_bool = 1 == '1';
+}
 
-new Dump(new Foo, $string, $array, $int, $double, $null, $bool, $resource, [
+class Foo extends Bar
+{
+    private $string = 'string';
+    protected $int = 10;
+    public $array = [
+        'foo'   => 'bar'
+    ];
+    protected static $bool = false;
+}
+
+$string   = 'Foobar';
+$array    = ['foo', 'bar'];
+$int      = 327626;
+$double   = 22.223;
+$null     = null;
+$bool     = true;
+$resource = fopen('LICENSE', 'r');
+$m        = microtime(true);
+
+new Dump(new Foo, $string, $array, $int, $double, $null, $bool, [
     'foo' => 'bar',
     'bar' => 'foo',
     [
@@ -46,7 +59,7 @@ new Dump(new Foo, $string, $array, $int, $double, $null, $bool, $resource, [
             'foobar' => null,
         ]
     ]
-]);
+], $resource);
 
 new Dump(1 == '1', 1 === '1');
 ```

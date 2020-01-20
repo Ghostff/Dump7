@@ -52,26 +52,26 @@ class Dump
     private $isPosix = false;
 
     private $colors = [
-        'string'                => ['0000FF', 'blue'],
-        'integer'               => ['1BAABB', 'light_green'],
-        'double'                => ['9C6E25', 'cyan'],
-        'boolean'               => ['bb02ff', 'purple'],
-        'null'                  => ['6789f8', 'white'],
-        'type'                  => ['AAAAAA', 'light_gray'],
-        'size'                  => ['5BA415', 'green'],
-        'recursion'             => ['F00000', 'red'],
-        'resource'              => ['F00000', 'red'],
+        'string'    => ['0000FF', 'blue'],
+        'integer'   => ['1BAABB', 'light_green'],
+        'double'    => ['9C6E25', 'cyan'],
+        'boolean'   => ['bb02ff', 'purple'],
+        'null'      => ['6789f8', 'white'],
+        'type'      => ['AAAAAA', 'light_gray'],
+        'size'      => ['5BA415', 'green'],
+        'recursion' => ['F00000', 'red'],
+        'resource'  => ['F00000', 'red'],
 
-        'array'                 => ['000000', 'white'],
-        'multi_array_key'       => ['59829e', 'yellow'],
-        'single_array_key'      => ['f07b06', 'light_yellow'],
-        'multi_array_arrow'     => ['e103c4', 'red'],
-        'single_array_arrow'    => ['f00000', 'red'],
+        'array'              => ['000000', 'white'],
+        'multi_array_key'    => ['59829e', 'yellow'],
+        'single_array_key'   => ['f07b06', 'light_yellow'],
+        'multi_array_arrow'  => ['e103c4', 'red'],
+        'single_array_arrow' => ['f00000', 'red'],
 
-        'object'                => ['000000', 'white'],
-        'property_visibility'   => ['741515', 'light_red'],
-        'property_name'         => ['987a00', 'light_cyan'],
-        'property_arrow'        => ['f00000', 'red'],
+        'object'              => ['000000', 'white'],
+        'property_visibility' => ['741515', 'light_red'],
+        'property_name'       => ['987a00', 'light_cyan'],
+        'property_arrow'      => ['f00000', 'red'],
     ];
 
     private static $safe    = false;
@@ -79,6 +79,7 @@ class Dump
 
     /**
      * Foreground colors map
+     *
      * @var array
      */
     private $foregrounds = [
@@ -103,6 +104,7 @@ class Dump
 
     /**
      * Background colors map
+     *
      * @var array
      */
     private $backgrounds = [
@@ -127,6 +129,7 @@ class Dump
 
     /**
      * Styles map
+     *
      * @var array
      */
     private $styles = [
@@ -147,7 +150,7 @@ class Dump
     {
         if (substr(PHP_SAPI, 0, 3) == 'cli')
         {
-            $this->isCli = true;
+            $this->isCli   = true;
             $this->isPosix = $this->isPosix();
         }
 
@@ -168,7 +171,7 @@ class Dump
      * Updates color properties value.
      *
      * @param string $name
-     * @param array $value
+     * @param array  $value
      */
     public static function set(string $name, array $value)
     {
@@ -201,9 +204,12 @@ class Dump
         // disable posix errors about unknown resource types
         if (function_exists('posix_isatty'))
         {
-            set_error_handler(function () {});
+            set_error_handler(function ()
+            {
+            });
             $isPosix = posix_isatty(STDIN);
             restore_error_handler();
+
             return $isPosix;
         }
 
@@ -213,14 +219,15 @@ class Dump
     /**
      * Format string using ANSI escape sequences
      *
-     * @param  string $string
-     * @param  string $format defaults to 'none|none|none'
+     * @param string $string
+     * @param string $format defaults to 'none|none|none'
+     *
      * @return string
      */
     private function format(string $string, string $format = null): string
     {
         // format only for POSIX
-        if (! $format || ! $this->isPosix)
+        if ( ! $format || ! $this->isPosix)
         {
             return $string;
         }
@@ -269,8 +276,8 @@ class Dump
                 break;
             }
         }
-        $file =  "{$bt['file']}(line:{$bt['line']})";
-        if (! $this->isCli)
+        $file = "{$bt['file']}(line:{$bt['line']})";
+        if ( ! $this->isCli)
         {
             echo "<code><small>{$file}</small><br />{$data}</code>";
         }
@@ -283,13 +290,14 @@ class Dump
     /**
      * Sets string color based on sapi.
      *
-     * @param $value
+     * @param        $value
      * @param string $name
+     *
      * @return string
      */
     private function color($value, string $name): string
     {
-        if (! $this->isCli)
+        if ( ! $this->isCli)
         {
             if ($name == 'type')
             {
@@ -299,6 +307,7 @@ class Dump
             {
                 $value = preg_replace('/(\[|\]|array|object)/', '<b>$0</b>', $value);
             }
+
             return "<span  style=\"color:#{$this->colors[$name][0]}\">{$value}</span>";
         }
         else
@@ -312,11 +321,12 @@ class Dump
      *
      * @param int $size
      * @param int $type
+     *
      * @return string
      */
     private function counter(int $size, int $type = 0): string
     {
-        return $this->color('(' . ($type ? 'length' : 'size')  . "={$size})", 'size');
+        return $this->color('(' . ($type ? 'length' : 'size') . "={$size})", 'size');
     }
 
     /**
@@ -324,6 +334,7 @@ class Dump
      *
      * @param string $type
      * @param string $before
+     *
      * @return string
      */
     private function type(string $type, string $before = ' '): string
@@ -345,6 +356,7 @@ class Dump
      * Indents line content.
      *
      * @param int $pad
+     *
      * @return string
      */
     private function indent(int $pad): string
@@ -356,6 +368,7 @@ class Dump
      * Adds padding to the line.
      *
      * @param int $size
+     *
      * @return string
      */
     private function pad(int $size): string
@@ -366,27 +379,27 @@ class Dump
     /**
      * Formats array index.
      *
-     * @param $key
+     * @param      $key
      * @param bool $parent
+     *
      * @return string
      */
     private function arrayIndex(string $key, bool $parent = false): string
     {
-        return $parent
-            ? "{$this->color("'{$key}'", 'single_array_key')} {$this->color('=>', 'single_array_arrow')} "
-            : "{$this->color("'{$key}'", 'multi_array_key')} {$this->color('=', 'multi_array_arrow')} ";
+        return $parent ? "{$this->color("'{$key}'", 'single_array_key')} {$this->color('=>', 'single_array_arrow')} " : "{$this->color("'{$key}'", 'multi_array_key')} {$this->color('=', 'multi_array_arrow')} ";
     }
 
     /**
      * Formats array elements.
      *
      * @param array $array
-     * @param bool $obj_call
+     * @param bool  $obj_call
+     *
      * @return string
      */
     private function formatArray(array $array, bool $obj_call): string
     {
-        $tmp = '';
+        $tmp          = '';
         $this->indent += $this->pad_size;
         foreach ($array as $key => $arr)
         {
@@ -394,7 +407,7 @@ class Dump
             {
                 $tmp .= "{$this->breakLine()}{$this->indent($this->indent)}{$this->arrayIndex((string) $key)} {$this->counter(count($arr))}";
                 $new = $this->formatArray($arr, $obj_call);
-                $tmp .=  ($new != '') ? " {{$new}{$this->indent($this->indent)}}" : ' {}';
+                $tmp .= ($new != '') ? " {{$new}{$this->indent($this->indent)}}" : ' {}';
             }
             else
             {
@@ -419,6 +432,7 @@ class Dump
      * Gets the id of an object. (DIRTY)
      *
      * @param $object
+     *
      * @return string
      */
     private function refcount($object): string
@@ -437,35 +451,73 @@ class Dump
      * Formats object elements.
      *
      * @param $object
-     * @return mixed|null|string
+     * @return string
      */
-    private function formatObject($object)
+    private function formatObject($object): string
     {
         if ($this->aboveNestLevel())
         {
             return $this->color('...', 'recursion');
         }
 
-        $reflection = new \ReflectionObject($object);
-        $tmp = '';
-        $this->indent += $this->pad_size;
-        foreach ($reflection->getProperties() as $size => $prop)
+        $reflection   = new \ReflectionObject($object);
+        $parent       = $reflection->getParentClass();
+        $properties   = $reflection->getProperties();
+        $inherited    = array_fill(0, count($properties), null);
+        $max_indent   = 0;
+        $name         = null;
+        $props        = null;
+
+        while ($parent)
         {
+            $props      = $parent->getProperties();
+            $name       = $parent->getName();
+            $properties = array_merge($properties, $props);
+            $inherited  = array_merge($inherited, array_fill(count($inherited), count($props), $name));
+            $parent     = $parent->getParentClass();
+            $max_indent = max($max_indent, strlen($name));
+        }
+
+        $tmp             = '';
+        $indent          = $this->indent($this->indent += $this->pad_size);
+        $private_color   = $this->color('private', 'property_visibility');
+        $protected_color = $this->color('protected', 'property_visibility');
+        $public_color    = $this->color('public', 'property_visibility');
+        $property_color  = $this->color(':', 'property_arrow');
+        $arrow_color     = $this->color('=>', 'property_arrow');
+        $string_pad_2    = $this->pad(2);
+        $string_pad_3    = $this->pad(3);
+        $line_break      = $this->breakLine();
+
+        foreach ($properties as $size => $prop)
+        {
+            if (isset($inherited[$size]))
+            {
+                $name = $inherited[$size];
+                $from = $this->color("[{$name}]", 'property_arrow');
+                $from .= $this->indent($max_indent - strlen($name));
+            }
+            else
+            {
+                $from = $max_indent > 0 ? $this->indent($max_indent + 2) : '';
+            }
+
             if ($prop->isPrivate())
             {
-                $tmp .= "{$this->breakLine()}{$this->indent($this->indent)}{$this->color('private', 'property_visibility')}{$this->pad(2)} {$this->color(':', 'property_arrow')} ";
+                $tmp .= "{$line_break}{$indent}{$private_color}{$string_pad_2} {$property_color} ";
             }
             elseif ($prop->isProtected())
             {
-                $tmp .= "{$this->breakLine()}{$this->indent($this->indent)}{$this->color('protected', 'property_visibility')} {$this->color(':', 'property_arrow')} ";
+                $tmp .= "{$line_break}{$indent}{$protected_color} {$property_color} ";
             }
             elseif ($prop->isPublic())
             {
-                $tmp .= "{$this->breakLine()}{$this->indent($this->indent)}{$this->color('public', 'property_visibility')}{$this->pad(3)} {$this->color(':', 'property_arrow')} ";
+                $tmp .= "{$line_break}{$indent}{$public_color}{$string_pad_3} {$property_color} ";
             }
 
             $prop->setAccessible(true);
-            $tmp .= "{$this->color("'{$prop->getName()}'", 'property_name')} {$this->color('=>', 'property_arrow')} {$this->evaluate(array($prop->getValue($object)), true, true)}";
+            $new_obj = $prop->getValue($reflection->newInstanceWithoutConstructor());
+            $tmp .= "{$from} {$this->color("'{$prop->getName()}'", 'property_name')} {$arrow_color} {$this->evaluate([$new_obj], true, true)}";
         }
 
         if ($tmp != '')
@@ -481,7 +533,6 @@ class Dump
             $this->color("#{$this->refcount($object)}", 'size'),
             $tmp
         ], $this->color('object (:name) [:id] [:content]', 'object'));
-
 
         return $tmp;
     }
@@ -503,10 +554,9 @@ class Dump
             switch ($type)
             {
                 case 'string':
-
                     if (! $this->isCli)
                     {
-                        $each = nl2br(str_replace(array('<', ' '), array('&lt;', '&nbsp;'), $each));
+                        $each = nl2br(str_replace(['<', ' '], ['&lt;', '&nbsp;'], $each));
                     }
 
                     $tmp .= "{$this->color("'{$each}'", $type)}{$this->counter(strlen($each), 1)}{$this->type($type)}";
@@ -541,7 +591,6 @@ class Dump
             {
                 $tmp .= $this->breakLine();
             }
-
         }
 
         return $tmp;
