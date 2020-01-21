@@ -276,14 +276,15 @@ class Dump
                 break;
             }
         }
+
         $file = "{$bt['file']}(line:{$bt['line']})";
-        if ( ! $this->isCli)
+        if ($this->isCli)
         {
-            echo "<code><small>{$file}</small><br />{$data}</code>";
+            $this->write("{$file}\n{$data}");
         }
         else
         {
-            $this->write($data);
+            echo '<code><small>' . $file . '</small><br />' . $data . '</code>';
         }
     }
 
@@ -299,21 +300,19 @@ class Dump
     {
         if ( ! $this->isCli)
         {
-            if ($name == 'type')
-            {
-                return "<small style=\"color:#{$this->colors[$name][0]}\">{$value}</small>";
-            }
-            elseif ($name == 'array' || $name == 'object')
-            {
-                $value = preg_replace('/(\[|\]|array|object)/', '<b>$0</b>', $value);
-            }
-
-            return "<span  style=\"color:#{$this->colors[$name][0]}\">{$value}</span>";
-        }
-        else
-        {
             return $this->format($value, $this->colors[$name][1]);
         }
+
+        if ($name == 'type')
+        {
+            return "<small style=\"color:#{$this->colors[$name][0]}\">{$value}</small>";
+        }
+        elseif ($name == 'array' || $name == 'object')
+        {
+            $value = preg_replace('/(\[|\]|array|object)/', '<b>$0</b>', $value);
+        }
+
+        return "<span  style=\"color:#{$this->colors[$name][0]}\">{$value}</span>";
     }
 
     /**
@@ -361,7 +360,7 @@ class Dump
      */
     private function indent(int $pad): string
     {
-        return str_repeat(! $this->isCli ? '&nbsp;' : ' ', $pad);
+        return str_repeat($this->isCli ? ' ' : '&nbsp;', $pad);
     }
 
     /**
@@ -373,7 +372,7 @@ class Dump
      */
     private function pad(int $size): string
     {
-        return str_repeat(! $this->isCli ? '&nbsp;' : ' ', $size < 0 ? 0 : $size);
+        return str_repeat($this->isCli ? ' ' : '&nbsp;', $size < 0 ? 0 : $size);
     }
 
     /**
@@ -386,7 +385,9 @@ class Dump
      */
     private function arrayIndex(string $key, bool $parent = false): string
     {
-        return $parent ? "{$this->color("'{$key}'", 'single_array_key')} {$this->color('=>', 'single_array_arrow')} " : "{$this->color("'{$key}'", 'multi_array_key')} {$this->color('=', 'multi_array_arrow')} ";
+        return $parent
+            ? "{$this->color("'{$key}'", 'single_array_key')} {$this->color('=>', 'single_array_arrow')} "
+            : "{$this->color("'{$key}'", 'multi_array_key')} {$this->color('=', 'multi_array_arrow')} ";
     }
 
     /**
@@ -401,24 +402,26 @@ class Dump
     {
         $tmp          = '';
         $this->indent += $this->pad_size;
+        $break_line   = $this->breakLine();
+        $indent       = $this->indent($this->indent);
         foreach ($array as $key => $arr)
         {
             if (is_array($arr))
             {
-                $tmp .= "{$this->breakLine()}{$this->indent($this->indent)}{$this->arrayIndex((string) $key)} {$this->counter(count($arr))}";
+                $tmp .= "{$break_line}{$indent}{$this->arrayIndex((string) $key)} {$this->counter(count($arr))}";
                 $new = $this->formatArray($arr, $obj_call);
-                $tmp .= ($new != '') ? " {{$new}{$this->indent($this->indent)}}" : ' {}';
+                $tmp .= ($new != '') ? " {{$new}{$indent}}" : ' {}';
             }
             else
             {
-                $tmp .= "{$this->breakLine()}{$this->indent($this->indent)}{$this->arrayIndex((string) $key, true)}{$this->evaluate([$arr], true)}";
+                $tmp .= "{$break_line}{$indent}{$this->arrayIndex((string) $key, true)}{$this->evaluate([$arr], true)}";
             }
         }
 
         $this->indent -= $this->pad_size;
         if ($tmp != '')
         {
-            $tmp .= $this->breakLine();
+            $tmp .= $break_line;
             if ($obj_call)
             {
                 $tmp .= $this->indent($this->indent);
@@ -547,7 +550,9 @@ class Dump
      */
     private function evaluate(array $args, bool $called = false, bool $from_obj = false): string
     {
-        $tmp = null;
+        $tmp        = null;
+        $null_color = $this->color('null', 'null');
+
         foreach ($args as $each)
         {
             $type = gettype($each);
@@ -566,7 +571,7 @@ class Dump
                     $tmp .=  "{$this->color((string) $each, $type)}{$this->type($type)}";
                     break;
                 case 'NULL':
-                    $tmp .= "{$this->color('null', 'null')}{$this->type($type)}";
+                    $tmp .= "{$null_color}{$this->type($type)}";
                     break;
                 case 'boolean':
                     $tmp .= "{$this->color($each ? 'true' : 'false', $type)}{$this->type($type)}";
