@@ -57,7 +57,7 @@ class Dump
         'double'    => ['9C6E25', 'cyan'],
         'boolean'   => ['bb02ff', 'purple'],
         'null'      => ['6789f8', 'white'],
-        'type'      => ['AAAAAA', 'light_gray'],
+        'type'      => ['AAAAAA', 'dark_gray'],
         'size'      => ['5BA415', 'green'],
         'recursion' => ['F00000', 'red'],
         'resource'  => ['F00000', 'red'],
@@ -204,9 +204,7 @@ class Dump
         // disable posix errors about unknown resource types
         if (function_exists('posix_isatty'))
         {
-            set_error_handler(function ()
-            {
-            });
+            set_error_handler(function (){});
             $isPosix = posix_isatty(STDIN);
             restore_error_handler();
 
@@ -232,12 +230,12 @@ class Dump
             return $string;
         }
 
-        $format = $format ? explode('|', $format) : [];
+        $formats = $format ? explode('|', $format) : [];
 
         $code = array_filter([
-            $this->backgrounds[$format[1] ?? null] ?? null,
-            $this->styles[$format[2] ?? null] ?? null,
-            $this->foregrounds[$format[0] ?? null] ?? null,
+            $this->backgrounds[$formats[1] ?? null] ?? null,
+            $this->styles[$formats[2] ?? null] ?? null,
+            $this->foregrounds[$formats[0] ?? null] ?? null,
         ]);
 
         $code = implode(';', $code);
@@ -298,7 +296,7 @@ class Dump
      */
     private function color($value, string $name): string
     {
-        if ( ! $this->isCli)
+        if ($this->isCli)
         {
             return $this->format($value, $this->colors[$name][1]);
         }
@@ -313,19 +311,6 @@ class Dump
         }
 
         return "<span  style=\"color:#{$this->colors[$name][0]}\">{$value}</span>";
-    }
-
-    /**
-     * Format the size of array elements or length of string.
-     *
-     * @param int $size
-     * @param int $type
-     *
-     * @return string
-     */
-    private function counter(int $size, int $type = 0): string
-    {
-        return $this->color('(' . ($type ? 'length' : 'size') . "={$size})", 'size');
     }
 
     /**
@@ -408,7 +393,7 @@ class Dump
         {
             if (is_array($arr))
             {
-                $tmp .= "{$break_line}{$indent}{$this->arrayIndex((string) $key)} {$this->counter(count($arr))}";
+                $tmp .= "{$break_line}{$indent}{$this->arrayIndex((string) $key)} {$this->color('(size=' . count($arr) . ')', 'size')}";
                 $new = $this->formatArray($arr, $obj_call);
                 $tmp .= ($new != '') ? " {{$new}{$indent}}" : ' {}';
             }
@@ -564,21 +549,21 @@ class Dump
                         $each = nl2br(str_replace(['<', ' '], ['&lt;', '&nbsp;'], $each));
                     }
 
-                    $tmp .= "{$this->color("'{$each}'", $type)}{$this->counter(strlen($each), 1)}{$this->type($type)}";
+                    $tmp .= "{$this->type("{$type}:" . strlen($each))} {$this->color("'{$each}'", $type)}";
                     break;
                 case 'integer':
                 case 'double':
-                    $tmp .=  "{$this->color((string) $each, $type)}{$this->type($type)}";
+                    $tmp .=  "{$this->type($type)} {$this->color((string) $each, $type)}";
                     break;
                 case 'NULL':
-                    $tmp .= "{$null_color}{$this->type($type)}";
+                    $tmp .= "{$this->type($type)} {$null_color}";
                     break;
                 case 'boolean':
-                    $tmp .= "{$this->color($each ? 'true' : 'false', $type)}{$this->type($type)}";
+                    $tmp .= "{$this->type($type)} {$this->color($each ? 'true' : 'false', $type)}";
                     break;
                 case 'array':
                     $tmp .= str_replace([':size', ':content'], [
-                        $this->counter(count($each)),
+                        $this->color('(size=' . count($each) . ')', 'size'),
                         $this->formatArray($each, $from_obj)
                     ], $this->color('array :size [:content]', $type));
                     break;
