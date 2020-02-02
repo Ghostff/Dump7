@@ -43,22 +43,22 @@ Class Foo extends Bar {
 ```php
 class FooBar
 {
-    private $inherited_int = 123;
-    private $inherited_bool = ['string'];
+    private $inherited_int   = 123;
+    private $inherited_array = ['string'];
 }
 
 class Bar extends FooBar
 {
     private $inherited_float = 0.22;
-    private $inherited_bool = 1 == '1';
+    private $inherited_bool  = 1 == '1';
 }
 
 class Foo extends Bar
 {
     private $string = 'string';
-    protected $int = 10;
-    public $array = [
-        'foo'   => 'bar'
+    protected $int  = 10;
+    public $array   = [
+        'foo' => 'bar'
     ];
     protected static $bool = false;
 }
@@ -88,6 +88,7 @@ new Dump(new Foo, $string, $array, $int, $double, $null, $bool, [
 ], $resource);
 
 new Dump(1 == '1', 1 === '1');
+Dump::safe(...$args); # running on terminal without color capabilities.
 ```
 Replacing predefined colors:
 ```php
@@ -105,22 +106,3 @@ CLI(Unix):
 CLI(Window):     
 
 ![cli screenshot](https://github.com/Ghostff/Dump7/blob/master/posixWin.png)
-
-Windows user runing on terminal without color capabilities, can use `Dump::safe` method:
-```php
-Dump::safe(new Foo, $string, $array, $int, $double, $null, $bool, $resource, [
-    'foo' => 'bar',
-    'bar' => 'foo',
-    [
-        'foo' => 'foobar',
-        'bar_foo',
-        2 => 'foo',
-        'foo' => [
-            'barbar' => 55,
-            'foofoo' => false,
-            'foobar' => null,
-        ]
-    ]
-]);
-```
-CLI Windows output:

@@ -448,7 +448,7 @@ class Dump
             return $this->color('...', 'recursion');
         }
 
-        $reflection   = new ReflectionObject($object);
+        $reflection   = new \ReflectionObject($object);
         $class_name   = $reflection->getName();
         $properties   = [];
         $tmp          = '';
