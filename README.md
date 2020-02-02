@@ -13,6 +13,32 @@ $ composer require ghostff/dump7
     "ghostff/dump7": "^1.0"
 }
 ```    
+# Display Flags
+You can simple hide or show some object attribute using a Doc block flag:
+
+|                               |                                                   |
+|-------------------------------|---------------------------------------------------|
+| `@dumpignore-inheritance`     | Hides inherited class properties.                 |
+| `@dumpignore-inherited-class` | Hides the class name from inherited properties.   |
+| `@dumpignore-private`         | Show all properties except the **private** ones.  |
+| `@dumpignore-protected`       | Show all properties except the **protected** ones.|
+| `@dumpignore-public`          | Show all properties except the **public** ones.   |
+| `@dumpignore`                 | Hide the property the Doc comment belongs to.     |
+```php
+/**
+* @dumpignore-inheritance
+* @dumpignore-inherited-class
+* @dumpignore-private
+* @dumpignore-public
+* @dumpignore-public
+*/
+Class Foo extends Bar {
+    /** @dumpignore */
+    private ?BigObject $foo = null;
+}
+```
+
+# Usage
 
 ```php
 class FooBar
