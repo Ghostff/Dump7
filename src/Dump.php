@@ -536,8 +536,16 @@ class Dump
             }
 
             $prop->setAccessible(true);
-            $new_obj = $prop->getValue($object);
-            $tmp .= "{$from} {$this->color("'{$prop->getName()}'", 'property_name')} {$arrow_color} {$this->evaluate([$new_obj], true, true)}";
+            if ($prop->isInitialized($object))
+            {
+                $value = $this->evaluate([$prop->getValue($object)], true, true);
+            }
+            else
+            {
+                $value = $this->type('uninitialized');
+            }
+
+            $tmp .= "{$from} {$this->color("'{$prop->getName()}'", 'property_name')} {$arrow_color} {$value}";
         }
 
         if ($tmp != '')
