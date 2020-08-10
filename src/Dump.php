@@ -56,6 +56,7 @@ class Dump
         'integer'   => ['1BAABB', 'light_green'],
         'double'    => ['9C6E25', 'cyan'],
         'boolean'   => ['bb02ff', 'purple'],
+        'keyword'   => ['bb02ff', 'purple'],
         'null'      => ['6789f8', 'white'],
         'type'      => ['AAAAAA', 'dark_gray'],
         'size'      => ['5BA415', 'green'],
@@ -282,7 +283,7 @@ class Dump
         }
         else
         {
-            echo '<code><small>' . $file . '</small><br />' . $data . '</code>';
+            echo "<code><small>{$file}</small><br />{$data}</code>";
         }
     }
 
@@ -321,7 +322,7 @@ class Dump
      *
      * @return string
      */
-    private function type(string $type, string $before = ' '): string
+    private function type(string $type, string $before = ''): string
     {
         return "{$before}{$this->color($type, 'type')}";
     }
@@ -536,13 +537,13 @@ class Dump
             }
 
             $prop->setAccessible(true);
-            if ($prop->isInitialized($object))
+            if (version_compare(PHP_VERSION, '7.4.0') >= 0)
             {
-                $value = $this->evaluate([$prop->getValue($object)], true, true);
+                $value = $prop->isInitialized($object) ? $this->getValue($prop, $object, $class_name) : $this->type('uninitialized');
             }
             else
             {
-                $value = $this->type('uninitialized');
+                $value = $this->getValue($prop, $object, $class_name);
             }
 
             $tmp .= "{$from} {$this->color("'{$prop->getName()}'", 'property_name')} {$arrow_color} {$value}";
@@ -563,6 +564,27 @@ class Dump
         ], $this->color('object (:name) [:id] [:content]', 'object'));
 
         return $tmp;
+    }
+
+    /**
+     * Formats object property values.
+     *
+     * @param \ReflectionProperty $property
+     * @param                     $object
+     * @param string              $class_name
+     *
+     * @return string
+     */
+    private function getValue(ReflectionProperty $property, $object, string $class_name): string
+    {
+        $value = $property->getValue($object);
+        # Prevent infinite loop caused by nested object property. e.g. when an object property is pointing to the same
+        # object.
+        if (is_object($value) && $value instanceof $object && $value == $object) {
+            return "{$this->type($class_name)} {$this->color('::self', 'keyword')}";
+        }
+
+        return $this->evaluate([$value], true, true);
     }
 
     /**
