@@ -95,6 +95,19 @@ Replacing predefined colors:
 # set($name, [$cgi_color, $cli_color]);
 Dump::set('boolean', ['bb02ff', 'purple']);
 ```
+
+By default, when `Dump` is called inside a function, the call line is set to `new Dump` inside the function instead of the function
+call. With `setTraceOffset` you can set the offset of each call line.
+```php
+function dump()
+{
+    Dump::setTraceOffset(2);
+    new Dump(...func_get_args()); # Dont use this test.php(line:4) as call line
+}
+
+dump('foo', 22, 'bar', true); // Use test.php(line:7) instead
+```
+
 CGI output:    
 
 ![cgi screenshot](https://github.com/Ghostff/Dump7/blob/master/cgi.png)

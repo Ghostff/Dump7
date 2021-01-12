@@ -51,6 +51,8 @@ class Dump
 
     private $isPosix = false;
 
+    private static $trace_offset = 1;
+
     private $colors = [
         'string'    => ['0000FF', 'blue'],
         'integer'   => ['1BAABB', 'light_green'],
@@ -143,6 +145,15 @@ class Dump
         'negative'  => 7,
     ];
 
+    /**
+     * Set backtrace offset.
+     *
+     * @param int $offset
+     */
+    public static function setTraceOffset(int $offset)
+    {
+        self::$trace_offset = $offset;
+    }
 
     /**
      * Dump constructor.
@@ -271,7 +282,7 @@ class Dump
             }
             else
             {
-                $bt = $bt[((int) $key) + 1];
+                $bt = $bt[((int) $key) + self::$trace_offset];
                 break;
             }
         }

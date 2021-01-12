@@ -26,7 +26,10 @@ class Foo extends Bar
         'foo'   => 'bar'
     ];
     protected static $bool = false;
+    public static $foo = null;
 }
+
+Foo::$foo = new Foo();
 
 $string   = 'Foobar';
 $array    = ['foo', 'bar'];
@@ -53,3 +56,11 @@ new Dump(new Foo, $string, $array, $int, $double, $null, $bool, [
 ], $resource);
 
 new Dump(1 == '1', 1 === '1');
+
+function dump()
+{
+    Dump::setTraceOffset(2);
+    new Dump(...func_get_args());
+}
+
+dump('foo', 22, 'bar', true);
