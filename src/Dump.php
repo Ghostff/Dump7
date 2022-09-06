@@ -1,43 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
-/**
- * Bittr
- *
- * @license
- *
- * New BSD License
- *
- * Copyright (c) 2017, ghostff community
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *      1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *      2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *      3. All advertising materials mentioning features or use of this software
- *      must display the following acknowledgement:
- *      This product includes software developed by the ghostff.
- *      4. Neither the name of the ghostff nor the
- *      names of its contributors may be used to endorse or promote products
- *      derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY ghostff ''AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL GHOSTFF COMMUNITY BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
+<?php declare(strict_types=1);
 
 class Dump
 {
@@ -45,7 +6,7 @@ class Dump
 
     private $indent = 0;
 
-    private $nest_level = 20;
+    private $nest_level = 50;
 
     private $pad_size = 3;
 
@@ -160,8 +121,7 @@ class Dump
      */
     public function __construct(...$args)
     {
-        if (substr(PHP_SAPI, 0, 3) == 'cli')
-        {
+        if (substr(PHP_SAPI, 0, 3) == 'cli') {
             $this->isCli   = true;
             $this->isPosix = $this->isPosix();
         }
@@ -208,15 +168,13 @@ class Dump
      */
     private function isPosix(): bool
     {
-        if (self::$safe)
-        {
+        if (self::$safe) {
             return false;
         }
 
         // disable posix errors about unknown resource types
-        if (function_exists('posix_isatty'))
-        {
-            set_error_handler(function (){});
+        if (function_exists('posix_isatty')) {
+            set_error_handler(function () {});
             $isPosix = posix_isatty(STDIN);
             restore_error_handler();
 
@@ -237,8 +195,7 @@ class Dump
     private function format(string $string, string $format = null): string
     {
         // format only for POSIX
-        if ( ! $format || ! $this->isPosix)
-        {
+        if (! $format || ! $this->isPosix) {
             return $string;
         }
 
@@ -274,27 +231,28 @@ class Dump
     {
         # Gets line
         $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-        foreach ($bt as $key => $value)
-        {
-            if ($value['file'] != __FILE__)
-            {
+        foreach ($bt as $key => $value) {
+            if ($value['file'] != __FILE__) {
                 unset($bt[$key]);
-            }
-            else
-            {
-                $bt = $bt[((int) $key) + self::$trace_offset];
+            } else {
+                $bt = $bt[((int)$key) + self::$trace_offset];
                 break;
             }
         }
 
-        $file = "{$bt['file']}(line:{$bt['line']})";
-        if ($this->isCli)
-        {
-            $this->write("{$file}\n{$data}");
+
+        if (isset($bt['file'])) {
+            $file = "{$bt['file']}(line:{$bt['line']})";
+        } else if ($bt['class']) {
+            $file = "{$bt['class']}::{$bt['function']}()";
+        } else {
+            $file = 'Unknown';
         }
-        else
-        {
-            echo "<code><small>{$file}</small><br />{$data}</code>";
+
+        if ($this->isCli) {
+            $this->write("{$file}\n{$data}");
+        } else {
+            echo "<code style='word-wrap:break-word;display:block;margin-bottom:20px'><small>at: {$file}</small><br />{$data}</code>";
         }
     }
 
@@ -308,17 +266,13 @@ class Dump
      */
     private function color($value, string $name): string
     {
-        if ($this->isCli)
-        {
+        if ($this->isCli) {
             return $this->format($value, $this->colors[$name][1]);
         }
 
-        if ($name == 'type')
-        {
+        if ($name == 'type') {
             return "<small style=\"color:#{$this->colors[$name][0]}\">{$value}</small>";
-        }
-        elseif ($name == 'array' || $name == 'object')
-        {
+        } elseif ($name == 'array' || $name == 'object') {
             $value = preg_replace('/(\[|\]|array|object)/', '<b>$0</b>', $value);
         }
 
@@ -382,6 +336,8 @@ class Dump
      */
     private function arrayIndex(string $key, bool $parent = false): string
     {
+        $key = str_replace(['<', ' '], ['&lt;', '&nbsp;'], $key);
+
         return $parent
             ? "{$this->color("'{$key}'", 'single_array_key')} {$this->color('=>', 'single_array_arrow')} "
             : "{$this->color("'{$key}'", 'multi_array_key')} {$this->color('=', 'multi_array_arrow')} ";
@@ -401,26 +357,20 @@ class Dump
         $this->indent += $this->pad_size;
         $break_line   = $this->breakLine();
         $indent       = $this->indent($this->indent);
-        foreach ($array as $key => $arr)
-        {
-            if (is_array($arr))
-            {
+        foreach ($array as $key => $arr) {
+            if (is_array($arr)) {
                 $tmp .= "{$break_line}{$indent}{$this->arrayIndex((string) $key)} {$this->color('(size=' . count($arr) . ')', 'size')}";
                 $new = $this->formatArray($arr, $obj_call);
                 $tmp .= ($new != '') ? " {{$new}{$indent}}" : ' {}';
-            }
-            else
-            {
+            } else {
                 $tmp .= "{$break_line}{$indent}{$this->arrayIndex((string) $key, true)}{$this->evaluate([$arr], true)}";
             }
         }
 
         $this->indent -= $this->pad_size;
-        if ($tmp != '')
-        {
+        if ($tmp != '') {
             $tmp .= $break_line;
-            if ($obj_call)
-            {
+            if ($obj_call) {
                 $tmp .= $this->indent($this->indent);
             }
         }
@@ -439,8 +389,7 @@ class Dump
     {
         ob_start();
         debug_zval_dump($object);
-        if (preg_match('/object\(.*?\)#(\d+)\s+\(/', ob_get_clean(), $match))
-        {
+        if (preg_match('/object\(.*?\)#(\d+)\s+\(/', ob_get_clean(), $match)) {
             return $match[1];
         }
 
@@ -451,38 +400,35 @@ class Dump
      * Formats object elements.
      *
      * @param $object
+     *
      * @return string
      */
     private function formatObject($object): string
     {
-        if ($this->aboveNestLevel())
-        {
+        if ($this->aboveNestLevel()) {
             return $this->color('...', 'recursion');
         }
 
-        $reflection   = new \ReflectionObject($object);
-        $class_name   = $reflection->getName();
-        $properties   = [];
-        $tmp          = '';
-        $inherited    = [];
-        $max_indent   = 0;
-        $comments     = '';
+        $reflection = new \ReflectionObject($object);
+        $class_name = $reflection->getName();
+        $properties = [];
+        $tmp        = '';
+        $inherited  = [];
+        $max_indent = 0;
+        $comments   = '';
 
-        while ($reflection)
-        {
+        while ($reflection) {
             $tmp_class_name = $reflection->getName();
             $max_indent     = max($max_indent, strlen($tmp_class_name));
-            $comments      .= $reflection->getDocComment() ?: '';
+            $comments       .= $reflection->getDocComment() ?: '';
 
-            foreach($reflection->getProperties() as $prop)
-            {
+            foreach ($reflection->getProperties() as $prop) {
                 $prop_name              = $prop->getName();
                 $properties[$prop_name] = $prop;
                 $inherited[$prop_name]  = $tmp_class_name == $class_name ? null : $tmp_class_name;
             }
 
-            if (strpos($comments, '@dumpignore-inheritance') !== false)
-            {
+            if (strpos($comments, '@dumpignore-inheritance') !== false) {
                 break;
             }
 
@@ -503,44 +449,33 @@ class Dump
         $hide_public     = strpos($comments, '@dumpignore-public') !== false;
         $hide_in_class   = strpos($comments, '@dumpignore-inherited-class') !== false;
 
-        foreach ($properties as $name => $prop)
-        {
+        foreach ($properties as $name => $prop) {
             $prop_comment = $prop->getDocComment();
-            if ($prop_comment && (strpos($prop_comment, '@dumpignore') !== false))
-            {
+            if ($prop_comment && (strpos($prop_comment, '@dumpignore') !== false)) {
                 continue;
             }
 
             $from = '';
-            if (! $hide_in_class && isset($inherited[$name]))
-            {
+            if (! $hide_in_class && isset($inherited[$name])) {
                 $name = $inherited[$name];
                 $from = $this->color("[{$name}]", 'property_arrow');
                 $from .= $this->indent($max_indent - strlen($name));
             }
 
-            if ($prop->isPrivate())
-            {
-                if ($hide_private)
-                {
+            if ($prop->isPrivate()) {
+                if ($hide_private) {
                     continue;
                 }
 
                 $tmp .= "{$line_break}{$indent}{$private_color}{$string_pad_2} {$property_color} ";
-            }
-            elseif ($prop->isProtected())
-            {
-                if ($hide_protected)
-                {
+            } elseif ($prop->isProtected()) {
+                if ($hide_protected) {
                     continue;
                 }
 
                 $tmp .= "{$line_break}{$indent}{$protected_color} {$property_color} ";
-            }
-            elseif ($prop->isPublic())
-            {
-                if ($hide_public)
-                {
+            } elseif ($prop->isPublic()) {
+                if ($hide_public) {
                     continue;
                 }
 
@@ -548,30 +483,28 @@ class Dump
             }
 
             $prop->setAccessible(true);
-            if (version_compare(PHP_VERSION, '7.4.0') >= 0)
-            {
-                $value = $prop->isInitialized($object) ? $this->getValue($prop, $object, $class_name) : $this->type('uninitialized');
-            }
-            else
-            {
+            if (version_compare(PHP_VERSION, '7.4.0') >= 0) {
+                $value = $prop->isInitialized($object) ? $this->getValue($prop, $object, $class_name) : $this->type(
+                    'uninitialized'
+                );
+            } else {
                 $value = $this->getValue($prop, $object, $class_name);
             }
 
             $tmp .= "{$from} {$this->color("'{$prop->getName()}'", 'property_name')} {$arrow_color} {$value}";
         }
 
-        if ($tmp != '')
-        {
+        if ($tmp != '') {
             $tmp .= $this->breakLine();
         }
 
         $this->indent -= $this->pad_size;
-        $tmp .= ($tmp != '') ? $this->indent($this->indent) : '';
+        $tmp          .= ($tmp != '') ? $this->indent($this->indent) : '';
 
-        $tmp =  str_replace([':name', ':id', ':content'], [
+        $tmp = str_replace([':name', ':id', ':content'], [
             $class_name,
             $this->color("#{$this->refcount($object)}", 'size'),
-            $tmp
+            $tmp,
         ], $this->color('object (:name) [:id] [:content]', 'object'));
 
         return $tmp;
@@ -602,8 +535,9 @@ class Dump
      * Couples all formats.
      *
      * @param array $args
-     * @param bool $called
-     * @param bool $from_obj
+     * @param bool  $called
+     * @param bool  $from_obj
+     *
      * @return string
      */
     private function evaluate(array $args, bool $called = false, bool $from_obj = false): string
@@ -611,14 +545,11 @@ class Dump
         $tmp        = null;
         $null_color = $this->color('null', 'null');
 
-        foreach ($args as $each)
-        {
+        foreach ($args as $each) {
             $type = gettype($each);
-            switch ($type)
-            {
+            switch ($type) {
                 case 'string':
-                    if (! $this->isCli)
-                    {
+                    if (! $this->isCli) {
                         $each = nl2br(str_replace(['<', ' '], ['&lt;', '&nbsp;'], $each));
                     }
 
@@ -626,7 +557,7 @@ class Dump
                     break;
                 case 'integer':
                 case 'double':
-                    $tmp .=  "{$this->type($type)} {$this->color((string) $each, $type)}";
+                    $tmp .= "{$this->type($type)} {$this->color((string) $each, $type)}";
                     break;
                 case 'NULL':
                     $tmp .= "{$this->type($type)} {$null_color}";
@@ -637,7 +568,7 @@ class Dump
                 case 'array':
                     $tmp .= str_replace([':size', ':content'], [
                         $this->color('(size=' . count($each) . ')', 'size'),
-                        $this->formatArray($each, $from_obj)
+                        $this->formatArray($each, $from_obj),
                     ], $this->color('array :size [:content]', $type));
                     break;
                 case 'object':
@@ -645,13 +576,15 @@ class Dump
                     break;
                 case 'resource':
                     $resource_type = get_resource_type($each);
-                    $resource_id   = (int) $each;
-                    $tmp .= $this->color( "Resource[{$this->color("#{$resource_id}", 'integer')}]({$this->color($resource_type, $type)}) ", 'object');
+                    $resource_id   = (int)$each;
+                    $tmp           .= $this->color(
+                        "Resource[{$this->color("#{$resource_id}", 'integer')}]({$this->color($resource_type, $type)}) ",
+                        'object'
+                    );
                     break;
             }
 
-            if (! $called)
-            {
+            if (! $called) {
                 $tmp .= $this->breakLine();
             }
         }
